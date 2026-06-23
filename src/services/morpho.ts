@@ -103,37 +103,37 @@ export interface TokenMetadata {
 }
 
 export async function fetchMarketParams(marketId: `0x${string}`): Promise<MarketParams> {
-  const [loanToken, collateralToken, oracle, irm, lltv] = await publicClient.readContract({
+  const result = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'idToMarketParams',
     args: [marketId],
-  })
+  }) as any
 
   return {
-    loanToken,
-    collateralToken,
-    oracle,
-    irm,
-    lltv,
+    loanToken: result.loanToken || result[0],
+    collateralToken: result.collateralToken || result[1],
+    oracle: result.oracle || result[2],
+    irm: result.irm || result[3],
+    lltv: result.lltv || result[4],
   }
 }
 
 export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketState> {
-  const [totalSupplyAssets, totalSupplyShares, totalBorrowAssets, totalBorrowShares, lastUpdate, fee] = await publicClient.readContract({
+  const result = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'market',
     args: [marketId],
-  })
+  }) as any
 
   return {
-    totalSupplyAssets,
-    totalSupplyShares,
-    totalBorrowAssets,
-    totalBorrowShares,
-    lastUpdate,
-    fee,
+    totalSupplyAssets: result.totalSupplyAssets || result[0],
+    totalSupplyShares: result.totalSupplyShares || result[1],
+    totalBorrowAssets: result.totalBorrowAssets || result[2],
+    totalBorrowShares: result.totalBorrowShares || result[3],
+    lastUpdate: result.lastUpdate || result[4],
+    fee: result.fee || result[5],
   }
 }
 
@@ -155,7 +155,7 @@ export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<T
         abi: ERC20_ABI,
         functionName: 'decimals',
       }),
-    ])) as [string, string, number]
+    ])) as any
 
     return {
       address: tokenAddress,

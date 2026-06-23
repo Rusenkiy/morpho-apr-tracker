@@ -51,6 +51,10 @@ const PRESETS = [
     id: '0xfbe436e9aa361487f0c3e4ff94c88aea72887a4482c6b8bcfec60a8584cdb05e',
     label: 'thBILL / USD₮0',
   },
+  {
+    id: '0x8eecdd03f1e12e03c04abefdb3f536067e071ad2c3f63e7b04c9a034889d0ba5',
+    label: 'AVLT / USD₮0',
+  },
 ]
 
 function App() {

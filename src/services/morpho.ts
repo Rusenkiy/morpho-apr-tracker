@@ -12,11 +12,11 @@ export const MORPHO_BLUE_ABI = [
         name: 'marketParams',
         type: 'tuple',
         components: [
-          { name: 'loanToken', type: 'address' },
-          { name: 'collateralToken', type: 'address' },
-          { name: 'oracle', type: 'address' },
-          { name: 'irm', type: 'address' },
-          { name: 'lltv', type: 'uint256' },
+          { type: 'address' },
+          { type: 'address' },
+          { type: 'address' },
+          { type: 'address' },
+          { type: 'uint256' },
         ],
       },
     ],
@@ -31,12 +31,12 @@ export const MORPHO_BLUE_ABI = [
         name: 'marketState',
         type: 'tuple',
         components: [
-          { name: 'totalSupplyAssets', type: 'uint128' },
-          { name: 'totalSupplyShares', type: 'uint128' },
-          { name: 'totalBorrowAssets', type: 'uint128' },
-          { name: 'totalBorrowShares', type: 'uint128' },
-          { name: 'lastUpdate', type: 'uint128' },
-          { name: 'fee', type: 'uint128' },
+          { type: 'uint128' },
+          { type: 'uint128' },
+          { type: 'uint128' },
+          { type: 'uint128' },
+          { type: 'uint128' },
+          { type: 'uint128' },
         ],
       },
     ],
@@ -103,37 +103,37 @@ export interface TokenMetadata {
 }
 
 export async function fetchMarketParams(marketId: `0x${string}`): Promise<MarketParams> {
-  const result = (await publicClient.readContract({
+  const [loanToken, collateralToken, oracle, irm, lltv] = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'idToMarketParams',
     args: [marketId],
-  })) as any
+  })
 
   return {
-    loanToken: result.loanToken,
-    collateralToken: result.collateralToken,
-    oracle: result.oracle,
-    irm: result.irm,
-    lltv: result.lltv,
+    loanToken,
+    collateralToken,
+    oracle,
+    irm,
+    lltv,
   }
 }
 
 export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketState> {
-  const result = (await publicClient.readContract({
+  const [totalSupplyAssets, totalSupplyShares, totalBorrowAssets, totalBorrowShares, lastUpdate, fee] = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'market',
     args: [marketId],
-  })) as any
+  })
 
   return {
-    totalSupplyAssets: result.totalSupplyAssets,
-    totalSupplyShares: result.totalSupplyShares,
-    totalBorrowAssets: result.totalBorrowAssets,
-    totalBorrowShares: result.totalBorrowShares,
-    lastUpdate: result.lastUpdate,
-    fee: result.fee,
+    totalSupplyAssets,
+    totalSupplyShares,
+    totalBorrowAssets,
+    totalBorrowShares,
+    lastUpdate,
+    fee,
   }
 }
 

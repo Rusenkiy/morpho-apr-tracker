@@ -138,29 +138,41 @@ export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketS
 }
 
 export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<TokenMetadata> {
-  const [symbol, name, decimals] = await Promise.all([
-    publicClient.readContract({
-      address: tokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'symbol',
-    }),
-    publicClient.readContract({
-      address: tokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'name',
-    }),
-    publicClient.readContract({
-      address: tokenAddress,
-      abi: ERC20_ABI,
-      functionName: 'decimals',
-    }),
-  ])
+  try {
+    const [symbol, name, decimals] = await Promise.all([
+      publicClient.readContract({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'symbol',
+      }),
+      publicClient.readContract({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'name',
+      }),
+      publicClient.readContract({
+        address: tokenAddress,
+        abi: ERC20_ABI,
+        functionName: 'decimals',
+      }),
+    ])
 
-  return {
-    address: tokenAddress,
-    symbol,
-    name,
-    decimals,
+    return {
+      address: tokenAddress,
+      symbol,
+      name,
+      decimals,
+    }
+  } catch (err) {
+    console.warn(`Failed to fetch metadata for token ${tokenAddress}:`, err)
+    return {
+      address: tokenAddress,
+      symbol: tokenAddress === '0x0000000000000000000000000000000000000000'
+        ? 'ETH'
+        : tokenAddress.slice(0, 6) + '...' + tokenAddress.slice(-4),
+      name: 'Unknown Token',
+      decimals: 18,
+    }
   }
 }
 
@@ -171,10 +183,15 @@ export async function fetchRateAtTarget(
   if (irmAddress === '0x0000000000000000000000000000000000000000') {
     return 0n
   }
-  return await publicClient.readContract({
-    address: irmAddress,
-    abi: ADAPTIVE_CURVE_IRM_ABI,
-    functionName: 'rateAtTarget',
-    args: [marketId],
-  })
+  try {
+    return await publicClient.readContract({
+      address: irmAddress,
+      abi: ADAPTIVE_CURVE_IRM_ABI,
+      functionName: 'rateAtTarget',
+      args: [marketId],
+    })
+  } catch (err) {
+    console.warn(`Failed to fetch rateAtTarget from IRM at ${irmAddress}:`, err)
+    return 0n
+  }
 }

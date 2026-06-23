@@ -144,6 +144,7 @@ function App() {
 
   // Formatting helper
   const formatAsset = (amount: bigint, decimals: number): string => {
+    if (decimals <= 0) return amount.toLocaleString()
     const divider = 10n ** BigInt(decimals)
     const integerPart = amount / divider
     const fractionalPart = amount % divider

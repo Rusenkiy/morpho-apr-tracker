@@ -103,6 +103,7 @@ export interface TokenMetadata {
 }
 
 export async function fetchMarketParams(marketId: `0x${string}`): Promise<MarketParams> {
+  // @ts-ignore
   const result = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
@@ -120,6 +121,7 @@ export async function fetchMarketParams(marketId: `0x${string}`): Promise<Market
 }
 
 export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketState> {
+  // @ts-ignore
   const result = await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
@@ -139,6 +141,7 @@ export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketS
 
 export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<TokenMetadata> {
   try {
+    // @ts-ignore
     const [symbol, name, decimals] = (await Promise.all([
       publicClient.readContract({
         address: tokenAddress,

@@ -1,6 +1,6 @@
 import { publicClient } from '../config/chain'
 
-export const MORPHO_BLUE_ADDRESS = '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb'
+export const MORPHO_BLUE_ADDRESS = '0x68e37dE8d93d3496ae143F2E900490f6280C57cD'
 
 export const MORPHO_BLUE_ABI = [
   {
@@ -103,12 +103,12 @@ export interface TokenMetadata {
 }
 
 export async function fetchMarketParams(marketId: `0x${string}`): Promise<MarketParams> {
-  const result = await publicClient.readContract({
+  const result = (await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'idToMarketParams',
     args: [marketId],
-  })
+  })) as any
 
   return {
     loanToken: result.loanToken,
@@ -120,12 +120,12 @@ export async function fetchMarketParams(marketId: `0x${string}`): Promise<Market
 }
 
 export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketState> {
-  const result = await publicClient.readContract({
+  const result = (await publicClient.readContract({
     address: MORPHO_BLUE_ADDRESS,
     abi: MORPHO_BLUE_ABI,
     functionName: 'market',
     args: [marketId],
-  })
+  })) as any
 
   return {
     totalSupplyAssets: result.totalSupplyAssets,
@@ -139,7 +139,7 @@ export async function fetchMarketState(marketId: `0x${string}`): Promise<MarketS
 
 export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<TokenMetadata> {
   try {
-    const [symbol, name, decimals] = await Promise.all([
+    const [symbol, name, decimals] = (await Promise.all([
       publicClient.readContract({
         address: tokenAddress,
         abi: ERC20_ABI,
@@ -155,7 +155,7 @@ export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<T
         abi: ERC20_ABI,
         functionName: 'decimals',
       }),
-    ])
+    ])) as [string, string, number]
 
     return {
       address: tokenAddress,
@@ -184,12 +184,12 @@ export async function fetchRateAtTarget(
     return 0n
   }
   try {
-    return await publicClient.readContract({
+    return (await publicClient.readContract({
       address: irmAddress,
       abi: ADAPTIVE_CURVE_IRM_ABI,
       functionName: 'rateAtTarget',
       args: [marketId],
-    })
+    })) as bigint
   } catch (err) {
     console.warn(`Failed to fetch rateAtTarget from IRM at ${irmAddress}:`, err)
     return 0n

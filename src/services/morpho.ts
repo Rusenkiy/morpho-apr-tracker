@@ -44,6 +44,16 @@ export const MORPHO_BLUE_ABI = [
   },
 ] as const
 
+export const ADAPTIVE_CURVE_IRM_ABI = [
+  {
+    type: 'function',
+    name: 'rateAtTarget',
+    inputs: [{ name: '', type: 'bytes32' }],
+    outputs: [{ name: '', type: 'int256' }],
+    stateMutability: 'view',
+  },
+] as const
+
 export const ERC20_ABI = [
   {
     type: 'function',
@@ -152,4 +162,19 @@ export async function fetchTokenMetadata(tokenAddress: `0x${string}`): Promise<T
     name,
     decimals,
   }
+}
+
+export async function fetchRateAtTarget(
+  irmAddress: `0x${string}`,
+  marketId: `0x${string}`
+): Promise<bigint> {
+  if (irmAddress === '0x0000000000000000000000000000000000000000') {
+    return 0n
+  }
+  return await publicClient.readContract({
+    address: irmAddress,
+    abi: ADAPTIVE_CURVE_IRM_ABI,
+    functionName: 'rateAtTarget',
+    args: [marketId],
+  })
 }

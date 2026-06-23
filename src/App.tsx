@@ -37,6 +37,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  ReferenceLine,
 } from 'recharts'
 
 const PRESETS = [
@@ -73,6 +74,7 @@ function App() {
   // Simulation Parameters
   const [simDurationDays, setSimDurationDays] = useState<number>(45)
   const [simUtilizationPercent, setSimUtilizationPercent] = useState<number>(100)
+  const [startDateStr, setStartDateStr] = useState<string>('')
 
   const handleFetch = async (targetId: string) => {
     if (!targetId.startsWith('0x') || targetId.length !== 66) {
@@ -146,6 +148,15 @@ function App() {
     100,
     state?.fee || 0n
   )
+
+  let currentDay: number | null = null
+  if (startDateStr) {
+    const start = new Date(startDateStr).getTime()
+    const now = new Date().getTime()
+    if (!isNaN(start) && now >= start) {
+      currentDay = (now - start) / (1000 * 3600 * 24)
+    }
+  }
 
   // Formatting helper
   const formatAsset = (amount: bigint, decimals: number): string => {
@@ -440,6 +451,32 @@ function App() {
                       )}
                     </div>
 
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.8rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Start Date (100% Util):</span>
+                      </div>
+                      <input
+                        type="date"
+                        value={startDateStr}
+                        onChange={(e) => setStartDateStr(e.target.value)}
+                        className="terminal-input"
+                        style={{
+                          width: '100%',
+                          padding: '0.5rem',
+                          fontSize: '0.8rem',
+                          background: '#141414',
+                          border: '1px solid var(--border-color)',
+                          color: '#fff',
+                          colorScheme: 'dark',
+                        }}
+                      />
+                      {currentDay !== null && (
+                        <div style={{ fontSize: '0.75rem', color: '#00ff66', marginTop: '0.4rem' }}>
+                          Relative Timeline: Day {currentDay.toFixed(1)}
+                        </div>
+                      )}
+                    </div>
+
                     <div style={{ background: '#111', padding: '0.8rem', borderLeft: '2px solid var(--accent-color)', fontSize: '0.75rem', color: '#aaa', lineHeight: '1.3' }}>
                       The model updates the anchor `rateAtTarget` at a speed of 50%/year multiplied by the normalization error. At 100% utilization, error is 1.0, yielding maximum growth speed.
                     </div>
@@ -470,6 +507,8 @@ function App() {
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 255, 102, 0.05)" />
                       <XAxis
                         dataKey="elapsedDays"
+                        type="number"
+                        domain={[0, simDurationDays]}
                         stroke="#71717a"
                         tick={{ fill: '#71717a', fontSize: '0.75rem', fontFamily: 'monospace' }}
                         tickFormatter={(v) => `Day ${v.toFixed(0)}`}
@@ -478,9 +517,17 @@ function App() {
                         stroke="#71717a"
                         tick={{ fill: '#71717a', fontSize: '0.75rem', fontFamily: 'monospace' }}
                         tickFormatter={(v) => `${v.toFixed(0)}%`}
-                        domain={[0, 'auto']}
+                        domain={['auto', 'auto']}
                       />
                       <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,255,102,0.2)', strokeWidth: 1 }} />
+                      {currentDay !== null && currentDay <= simDurationDays && (
+                        <ReferenceLine
+                          x={currentDay}
+                          stroke="#ffcc00"
+                          strokeDasharray="3 3"
+                          label={{ position: 'top', value: 'Today', fill: '#ffcc00', fontSize: 11 }}
+                        />
+                      )}
                       <Line
                         type="monotone"
                         dataKey="supplyRateAPR"

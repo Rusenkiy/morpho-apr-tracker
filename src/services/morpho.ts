@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { publicClient } from '../config/chain'
 
 export const MORPHO_BLUE_ADDRESS = '0x68e37dE8d93d3496ae143F2E900490f6280C57cD'

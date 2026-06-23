@@ -118,6 +118,17 @@ export interface SimulationPoint {
   rateAtTarget: bigint
   borrowRatePerSecond: bigint
   borrowRateAPR: number // formatted as percentage (e.g. 12.34%)
+  supplyRateAPR: number // formatted as percentage
+}
+
+/**
+ * Calculates the Supply APR based on Borrow Rate, Utilization, and Fee.
+ * Fee is expected in WAD format (e.g., 1e18 = 100%).
+ */
+export function calculateSupplyAPR(borrowRatePerSecond: bigint, utilization: bigint, fee: bigint): number {
+  const supplyRatePerSecond = wMulToZero(borrowRatePerSecond, utilization)
+  const supplyRateWithFee = wMulToZero(supplyRatePerSecond, WAD - fee)
+  return Number(supplyRateWithFee * SECONDS_PER_YEAR * 10000n / WAD) / 100
 }
 
 /**
@@ -127,12 +138,14 @@ export interface SimulationPoint {
  * @param utilization WAD value representing constant simulated utilization (defaults to 100%)
  * @param durationDays Number of days into the future to project
  * @param pointsCount Number of data points to generate for charting
+ * @param fee The fee represented in WAD (defaults to 0)
  */
 export function simulateAdaptiveCurveIRM(
   startRateAtTarget: bigint,
   utilization: bigint = WAD, // Defaults to 100%
   durationDays: number = 30,
-  pointsCount: number = 100
+  pointsCount: number = 100,
+  fee: bigint = 0n
 ): SimulationPoint[] {
   const finalRateAtTarget = startRateAtTarget === 0n ? INITIAL_RATE_AT_TARGET : startRateAtTarget
   const err = calculateError(utilization)
@@ -154,6 +167,7 @@ export function simulateAdaptiveCurveIRM(
     // Convert per-second rate to annual percentage rate (APR)
     // APR = rate * SECONDS_PER_YEAR * 100 %
     const aprPercent = Number(borrowRatePerSecond * SECONDS_PER_YEAR * 10000n / WAD) / 100
+    const supplyAprPercent = calculateSupplyAPR(borrowRatePerSecond, utilization, fee)
 
     points.push({
       elapsedSeconds: Number(elapsedSeconds),
@@ -161,6 +175,7 @@ export function simulateAdaptiveCurveIRM(
       rateAtTarget: rateAtTarget_t,
       borrowRatePerSecond,
       borrowRateAPR: aprPercent,
+      supplyRateAPR: supplyAprPercent,
     })
   }
 

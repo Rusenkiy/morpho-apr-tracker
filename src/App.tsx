@@ -24,6 +24,7 @@ import {
   calculateUtilization,
   calculateError,
   calculateCurve,
+  calculateSupplyAPR,
   INITIAL_RATE_AT_TARGET,
   WAD,
   SECONDS_PER_YEAR,
@@ -134,8 +135,7 @@ function App() {
   const liveErr = calculateError(liveUtilization)
   const currentAnchor = rateAtTargetVal === 0n ? INITIAL_RATE_AT_TARGET : rateAtTargetVal
   const liveBorrowRatePerSecond = calculateCurve(currentAnchor, liveErr)
-  const liveBorrowAPR =
-    Number((liveBorrowRatePerSecond * SECONDS_PER_YEAR * 10000n) / WAD) / 100
+  const liveSupplyAPR = state ? calculateSupplyAPR(liveBorrowRatePerSecond, liveUtilization, state.fee) : 0
 
   // Run the simulation using on-chain rateAtTarget as start point
   const simUtilizationWad = (BigInt(simUtilizationPercent) * WAD) / 100n
@@ -143,7 +143,8 @@ function App() {
     rateAtTargetVal,
     simUtilizationWad,
     simDurationDays,
-    100
+    100,
+    state?.fee || 0n
   )
 
   // Formatting helper
@@ -180,7 +181,7 @@ function App() {
             Day: {data.elapsedDays.toFixed(1)}
           </div>
           <div style={{ color: '#00ff66', fontWeight: 'bold' }}>
-            Borrow APR: {data.borrowRateAPR.toFixed(2)}%
+            Supply APR: {data.supplyRateAPR.toFixed(2)}%
           </div>
           <div style={{ color: '#e4e4e7', fontSize: '0.8rem' }}>
             Anchor Rate: {((Number(data.rateAtTarget * SECONDS_PER_YEAR * 10000n) / 10000) / 1e14).toFixed(2)}%
@@ -334,9 +335,9 @@ function App() {
 
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div>
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Current Borrow APR</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.2rem' }}>Current Supply APR</div>
                         <div style={{ fontSize: '1.3rem', color: 'var(--accent-color)', fontWeight: 'bold' }} className="glow-text">
-                          {liveBorrowAPR.toFixed(2)}%
+                          {liveSupplyAPR.toFixed(2)}%
                         </div>
                       </div>
                       <div>
@@ -451,7 +452,7 @@ function App() {
               <section className="glow-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '0.6rem' }}>
                   <h3 style={{ fontSize: '1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <TrendingUp size={15} style={{ color: 'var(--accent-color)' }} /> Projected Borrow APR Trajectory
+                    <TrendingUp size={15} style={{ color: 'var(--accent-color)' }} /> Projected Supply APR Trajectory
                   </h3>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -482,8 +483,8 @@ function App() {
                       <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(0,255,102,0.2)', strokeWidth: 1 }} />
                       <Line
                         type="monotone"
-                        dataKey="borrowRateAPR"
-                        name="Borrow APR"
+                        dataKey="supplyRateAPR"
+                        name="Supply APR"
                         stroke="var(--accent-color)"
                         strokeWidth={2}
                         dot={false}
@@ -494,8 +495,8 @@ function App() {
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <span>Start APR: {chartData[0].borrowRateAPR.toFixed(2)}%</span>
-                  <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>Peak Simulated APR: {chartData[chartData.length - 1].borrowRateAPR.toFixed(2)}%</span>
+                  <span>Start APR: {chartData[0].supplyRateAPR.toFixed(2)}%</span>
+                  <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>Peak Simulated APR: {chartData[chartData.length - 1].supplyRateAPR.toFixed(2)}%</span>
                 </div>
               </section>
             </>

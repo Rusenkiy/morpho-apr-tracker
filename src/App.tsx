@@ -6,7 +6,6 @@ import {
   RefreshCw,
   Cpu,
   ExternalLink,
-  Sliders,
   Calendar,
   AlertTriangle,
 } from 'lucide-react'
@@ -72,9 +71,8 @@ function App() {
   const [collateralToken, setCollateralToken] = useState<TokenMetadata | null>(null)
 
   // Simulation Parameters
-  const [simDurationDays, setSimDurationDays] = useState<number>(45)
-  const [simUtilizationPercent, setSimUtilizationPercent] = useState<number>(100)
-  const [startDateStr, setStartDateStr] = useState<string>('')
+  const simDurationDays = 45
+  const simUtilizationPercent = 100
 
   const handleFetch = async (targetId: string) => {
     if (!targetId.startsWith('0x') || targetId.length !== 66) {
@@ -150,11 +148,12 @@ function App() {
   )
 
   let currentDay: number | null = null
-  if (startDateStr) {
-    const start = new Date(startDateStr).getTime()
-    const now = new Date().getTime()
-    if (!isNaN(start) && now >= start) {
-      currentDay = (now - start) / (1000 * 3600 * 24)
+  if (chartData.length > 0) {
+    const matchingPoint = chartData.find(d => d.supplyRateAPR >= liveSupplyAPR)
+    if (matchingPoint) {
+      currentDay = matchingPoint.elapsedDays
+    } else {
+      currentDay = simDurationDays
     }
   }
 
@@ -176,22 +175,28 @@ function App() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
+      const isLive = currentDay !== null && Math.abs(data.elapsedDays - currentDay) <= (simDurationDays / 100)
       return (
         <div
           style={{
             background: '#040405',
-            border: '1px solid #00ff66',
+            border: isLive ? '1px solid #ffcc00' : '1px solid #00ff66',
             padding: '10px 14px',
-            boxShadow: '0 0 10px rgba(0, 255, 102, 0.4)',
+            boxShadow: isLive ? '0 0 10px rgba(255, 204, 0, 0.4)' : '0 0 10px rgba(0, 255, 102, 0.4)',
             fontFamily: 'monospace',
             fontSize: '0.85rem',
             lineHeight: '1.4',
           }}
         >
+          {isLive && (
+            <div style={{ color: '#ffcc00', fontWeight: 'bold', marginBottom: '6px', fontSize: '0.9rem' }}>
+              ⚡ Live Market Rate
+            </div>
+          )}
           <div style={{ color: '#888', marginBottom: '4px' }}>
             Day: {data.elapsedDays.toFixed(1)}
           </div>
-          <div style={{ color: '#00ff66', fontWeight: 'bold' }}>
+          <div style={{ color: isLive ? '#ffcc00' : '#00ff66', fontWeight: 'bold' }}>
             Supply APR: {data.supplyRateAPR.toFixed(2)}%
           </div>
           <div style={{ color: '#e4e4e7', fontSize: '0.8rem' }}>
@@ -400,88 +405,7 @@ function App() {
                   </div>
                 </section>
 
-                {/* Simulation Parameters controls */}
-                <section className="glow-panel" style={{ padding: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1rem', marginBottom: '1.2rem', paddingBottom: '0.4rem', borderBottom: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Sliders size={15} style={{ color: 'var(--accent-color)' }} /> Simulation Controls
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Timeline Horizon:</span>
-                        <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{simDurationDays} Days</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="7"
-                        max="180"
-                        value={simDurationDays}
-                        onChange={(e) => setSimDurationDays(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          accentColor: 'var(--accent-color)',
-                          cursor: 'pointer',
-                          background: '#141414',
-                        }}
-                      />
-                    </div>
 
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Simulated Utilization:</span>
-                        <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{simUtilizationPercent}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={simUtilizationPercent}
-                        onChange={(e) => setSimUtilizationPercent(Number(e.target.value))}
-                        style={{
-                          width: '100%',
-                          accentColor: 'var(--accent-color)',
-                          cursor: 'pointer',
-                          background: '#141414',
-                        }}
-                      />
-                      {simUtilizationPercent === 100 && (
-                        <div style={{ fontSize: '0.7rem', color: '#ffcc00', marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <span>⚡ Max Rate compounding active (err error = 1.0)</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.8rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>Start Date (100% Util):</span>
-                      </div>
-                      <input
-                        type="date"
-                        value={startDateStr}
-                        onChange={(e) => setStartDateStr(e.target.value)}
-                        className="terminal-input"
-                        style={{
-                          width: '100%',
-                          padding: '0.5rem',
-                          fontSize: '0.8rem',
-                          background: '#141414',
-                          border: '1px solid var(--border-color)',
-                          color: '#fff',
-                          colorScheme: 'dark',
-                        }}
-                      />
-                      {currentDay !== null && (
-                        <div style={{ fontSize: '0.75rem', color: '#00ff66', marginTop: '0.4rem' }}>
-                          Relative Timeline: Day {currentDay.toFixed(1)}
-                        </div>
-                      )}
-                    </div>
-
-                    <div style={{ background: '#111', padding: '0.8rem', borderLeft: '2px solid var(--accent-color)', fontSize: '0.75rem', color: '#aaa', lineHeight: '1.3' }}>
-                      The model updates the anchor `rateAtTarget` at a speed of 50%/year multiplied by the normalization error. At 100% utilization, error is 1.0, yielding maximum growth speed.
-                    </div>
-                  </div>
-                </section>
 
               </div>
 
@@ -525,7 +449,7 @@ function App() {
                           x={currentDay}
                           stroke="#ffcc00"
                           strokeDasharray="3 3"
-                          label={{ position: 'top', value: 'Today', fill: '#ffcc00', fontSize: 11 }}
+                          label={{ position: 'top', value: currentDay === simDurationDays ? 'Live (Overheated/Max)' : 'Live Market Rate', fill: '#ffcc00', fontSize: 11 }}
                         />
                       )}
                       <Line
